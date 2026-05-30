@@ -6,10 +6,7 @@ const NAV = [
   { icon: '🛒', label: 'Shopee SG',    key: 'shopee',     section: 'Platforms', platform: 'shopee', dot: '#f05629' },
   { icon: '🏪', label: 'Lazada SG',    key: 'lazada',     section: null,        platform: 'lazada', dot: '#5a67f2' },
   { icon: '🎵', label: 'TikTok Shop',  key: 'tiktok',     section: null,        platform: 'tiktok', dot: '#69c9d0' },
-  { icon: '📦', label: 'Inventory',    key: 'inventory',  section: 'Management' },
-  { icon: '🚚', label: 'Fulfilment',   key: 'fulfilment', section: null },
-  { icon: '💬', label: 'Customer Chat',key: 'chat',       section: null },
-  { icon: '⚙️', label: 'Settings',    key: 'settings',   section: null },
+  { icon: '⚙️', label: 'Settings',    key: 'settings',   section: 'Management' },
 ];
 
 export default function Sidebar({ activePage, onNav, open, platformStatus = {} }) {
