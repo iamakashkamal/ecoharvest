@@ -28,6 +28,7 @@ export function useOrders(days) {
     }
   }, [days]);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { load(); }, [load]);
 
   return { orders, status, loading, errors, lastSync, reload: load };

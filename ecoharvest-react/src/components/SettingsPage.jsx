@@ -47,7 +47,7 @@ const PLATFORMS = [
   },
 ];
 
-function PlatformCard({ platform, connected, onSaved, onDiscoverShopId }) {
+function PlatformCard({ platform, connected, onSaved }) {
   const [values,  setValues]  = useState({});
   const [saving,  setSaving]  = useState(false);
   const [message, setMessage] = useState(null);
@@ -217,10 +217,11 @@ export default function SettingsPage({ onBack }) {
       const res  = await fetch('/api/settings/status');
       const data = await res.json();
       setStatus(data);
-    } catch {}
+    } catch { /* fetch failed — leave status at defaults */ }
     setLoading(false);
   }, []);
 
+  // eslint-disable-next-line react-hooks/set-state-in-effect
   useEffect(() => { fetchStatus(); }, [fetchStatus]);
 
   return (

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { PLATFORM_META, STATUS_META } from '../data/orders';
 
 const PAGE_SIZE = 15;
@@ -14,7 +14,8 @@ export default function OrdersTable({ orders, status, setStatus, search, setSear
   const start    = (safePage - 1) * PAGE_SIZE;
   const slice    = orders.slice(start, start + PAGE_SIZE);
 
-  if (page > pages && pages > 0) setPage(1);
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  useEffect(() => { if (page > pages && pages > 0) setPage(1); }, [page, pages]);
 
   const pageNums = [...new Set([1, safePage - 1, safePage, safePage + 1, pages])]
     .filter(p => p >= 1 && p <= pages)
