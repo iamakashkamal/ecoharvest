@@ -86,13 +86,14 @@ router.get('/tiktok/discover', async (req, res) => {
 });
 
 // ── Lazada: GET /setup/lazada/connect ────────────────────────────
-// Redirects user to Lazada OAuth, setting callback to our server.
+// Redirects user to Lazada OAuth with the tunnel URL as callback.
 router.get('/lazada/connect', (req, res) => {
   const env     = readEnv();
   const APP_KEY = env.LAZADA_APP_KEY || process.env.LAZADA_APP_KEY;
   if (!APP_KEY) return res.status(400).send('LAZADA_APP_KEY not set in .env');
 
-  const callbackUrl = `http://localhost:${process.env.PORT || 3001}/setup/lazada/callback`;
+  const tunnelUrl  = process.env.TUNNEL_URL || `http://localhost:${process.env.PORT || 3001}`;
+  const callbackUrl = `${tunnelUrl}/setup/lazada/callback`;
   const authUrl = `https://auth.lazada.com/oauth/authorize?response_type=code&force_auth=true&redirect_uri=${encodeURIComponent(callbackUrl)}&client_id=${APP_KEY}&country=sg`;
   res.redirect(authUrl);
 });
