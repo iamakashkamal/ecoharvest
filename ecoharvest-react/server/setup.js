@@ -92,14 +92,54 @@ router.get('/lazada/connect', (req, res) => {
   const APP_KEY = env.LAZADA_APP_KEY || process.env.LAZADA_APP_KEY;
   if (!APP_KEY) return res.status(400).send('LAZADA_APP_KEY not set in .env');
 
-  const tunnelUrl  = process.env.TUNNEL_URL || `http://localhost:${process.env.PORT || 3001}`;
-  const callbackUrl = `${tunnelUrl}/setup/lazada/callback`;
+  const tunnelUrl   = (env.TUNNEL_URL || process.env.TUNNEL_URL || '').trim();
+  const callbackUrl = tunnelUrl
+    ? `${tunnelUrl}/setup/lazada/callback`
+    : `http://localhost:${process.env.PORT || 3001}/setup/lazada/callback`;
   const authUrl = `https://auth.lazada.com/oauth/authorize?response_type=code&force_auth=true&redirect_uri=${encodeURIComponent(callbackUrl)}&client_id=${APP_KEY}&country=sg`;
   res.redirect(authUrl);
 });
 
+// ── Lazada: POST /setup/lazada/exchange — manual code entry ──────
+router.post('/lazada/exchange', express.json(), async (req, res) => {
+  const code = req.body.code || req.query.code;
+  if (!code) return res.status(400).json({ error: 'No code provided.' });
+  await exchangeLazadaCode(code, res);
+});
+
+// ── Shared: exchange Lazada auth code for token ───────────────────
+async function exchangeLazadaCode(code, res) {
+  const env        = readEnv();
+  const APP_KEY    = env.LAZADA_APP_KEY    || process.env.LAZADA_APP_KEY;
+  const APP_SECRET = env.LAZADA_APP_SECRET || process.env.LAZADA_APP_SECRET;
+
+  if (!APP_KEY || !APP_SECRET) {
+    return res.status(400).json({ error: 'LAZADA_APP_KEY and LAZADA_APP_SECRET must be set in .env.' });
+  }
+
+  const path      = '/auth/token/create';
+  const timestamp = new Date().toISOString();
+  const params    = { app_key: APP_KEY, timestamp, sign_method: 'sha256', code };
+  const sorted    = Object.keys(params).sort().map(k => `${k}${params[k]}`).join('');
+  params.sign     = crypto.createHmac('sha256', APP_SECRET).update(`${path}${sorted}`).digest('hex').toUpperCase();
+
+  try {
+    const { data } = await axios.get('https://auth.lazada.com/rest/auth/token/create', { params, timeout: 10000 });
+
+    if (data.code !== '0') {
+      return res.status(400).json({ error: `Lazada token error: ${data.message} (${data.code})` });
+    }
+
+    writeEnvKey('LAZADA_ACCESS_TOKEN',  data.access_token);
+    writeEnvKey('LAZADA_REFRESH_TOKEN', data.refresh_token);
+    process.env.LAZADA_ACCESS_TOKEN = data.access_token;
+    return res.json({ success: true, message: 'Lazada connected! Token saved to .env.' });
+  } catch (err) {
+    return res.status(502).json({ error: err.response?.data?.message || err.message });
+  }
+}
+
 // ── Lazada: GET /setup/lazada/callback ───────────────────────────
-// Lazada redirects here with ?code=... after user authorises.
 router.get('/lazada/callback', async (req, res) => {
   const { code } = req.query;
   if (!code) {
@@ -114,7 +154,6 @@ router.get('/lazada/callback', async (req, res) => {
     return res.status(400).send('LAZADA_APP_KEY and LAZADA_APP_SECRET must be set in .env.');
   }
 
-  // Exchange code for access token
   const path      = '/auth/token/create';
   const timestamp = new Date().toISOString();
   const params    = { app_key: APP_KEY, timestamp, sign_method: 'sha256', code };
@@ -122,10 +161,7 @@ router.get('/lazada/callback', async (req, res) => {
   params.sign     = crypto.createHmac('sha256', APP_SECRET).update(`${path}${sorted}`).digest('hex').toUpperCase();
 
   try {
-    const { data } = await axios.get('https://auth.lazada.com/rest/auth/token/create', {
-      params,
-      timeout: 10000,
-    });
+    const { data } = await axios.get('https://auth.lazada.com/rest/auth/token/create', { params, timeout: 10000 });
 
     if (data.code !== '0') {
       return res.status(400).send(`Lazada token error: ${data.message} (${data.code})`);
@@ -299,18 +335,19 @@ router.get('/', (req, res) => {
     ${hasLaz
       ? `<p style="font-size:13px;color:#8b949e">Access token already saved.</p>`
       : `<div class="steps">
-          <div class="step"><div class="step-num">1</div><span>Click "Connect Lazada" — a Lazada login page opens in a new tab</span></div>
+          <div class="step"><div class="step-num">1</div><span>Click "Connect Lazada" — Lazada login page opens</span></div>
           <div class="step"><div class="step-num">2</div><span>Log in and click <strong>Authorise</strong></span></div>
-          <div class="step"><div class="step-num">3</div><span>The token is captured and saved to <code>.env</code> automatically</span></div>
+          <div class="step"><div class="step-num">3</div><span>Copy the full URL you are redirected to and paste it below</span></div>
+          <div class="step"><div class="step-num">4</div><span>Click <strong>Submit</strong> — token saved automatically</span></div>
         </div>
-        <div class="note-box">
-          ⚠️ <strong>One-time setup required:</strong> In your
-          <a href="https://open.lazada.com/apps/overview" target="_blank">Lazada Open Platform app settings</a>,
-          add <code>http://localhost:3001/setup/lazada/callback</code> as an allowed redirect URI, then click the button below.
+        <a class="btn btn-lazada" href="/setup/lazada/connect" target="_blank">🏪 Connect Lazada</a>
+        <br/><br/>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="laz-url" type="text" placeholder="Paste the full redirect URL here…"
+            style="flex:1;background:#1c2230;border:1px solid #2a3241;color:#e6edf3;padding:10px 12px;border-radius:8px;font-size:13px;outline:none"/>
+          <button class="btn btn-lazada" onclick="submitLazadaUrl()">Submit</button>
         </div>
-        <br/>
-        <a class="btn btn-lazada" href="/setup/lazada/connect" target="_blank" onclick="watchLazada()">🏪 Connect Lazada</a>
-        <div id="laz-note"></div>`
+        <div id="laz-note" style="margin-top:12px;display:none"></div>`
     }
   </div>
 
@@ -349,31 +386,47 @@ async function discoverTikTok() {
   out.style.display = 'block';
 }
 
-function watchLazada() {
-  const out = document.getElementById('laz-note');
-  out.style.display = 'block';
-  out.className = '';
-  out.style.background = 'rgba(88,166,255,.08)';
-  out.style.border = '1px solid rgba(88,166,255,.2)';
-  out.style.borderRadius = '8px';
-  out.style.padding = '12px 16px';
-  out.style.marginTop = '14px';
-  out.style.fontSize = '13px';
-  out.style.color = '#8b949e';
-  out.textContent = 'Waiting for Lazada authorisation…';
+async function submitLazadaUrl() {
+  const input = document.getElementById('laz-url');
+  const out   = document.getElementById('laz-note');
+  const raw   = input.value.trim();
+  if (!raw) { alert('Please paste the redirect URL first.'); return; }
 
-  const poll = setInterval(async () => {
-    const res  = await fetch('/api/lazada/status');
+  // Extract code from URL
+  let code;
+  try {
+    const url = new URL(raw);
+    code = url.searchParams.get('code');
+  } catch(e) {
+    // Maybe they pasted just the code
+    code = raw;
+  }
+
+  if (!code) { alert('Could not find a code in that URL. Please paste the full redirect URL.'); return; }
+
+  out.style.display = 'block';
+  out.style.cssText = 'margin-top:12px;padding:12px 16px;border-radius:8px;font-size:13px;background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.2);color:#8b949e;display:block';
+  out.textContent = 'Exchanging code for token…';
+
+  try {
+    const res  = await fetch('/setup/lazada/exchange', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code }),
+    });
     const data = await res.json();
-    if (data.connected) {
-      clearInterval(poll);
-      out.style.background = 'rgba(63,185,80,.1)';
-      out.style.border = '1px solid rgba(63,185,80,.3)';
-      out.style.color = '#3fb950';
+    if (data.success) {
+      out.style.cssText = 'margin-top:12px;padding:12px 16px;border-radius:8px;font-size:13px;background:rgba(63,185,80,.1);border:1px solid rgba(63,185,80,.3);color:#3fb950;display:block';
       out.textContent = '✅ Lazada connected! Token saved to .env.';
       checkAllDone();
+    } else {
+      out.style.cssText = 'margin-top:12px;padding:12px 16px;border-radius:8px;font-size:13px;background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);color:#f85149;display:block';
+      out.textContent = '❌ ' + (data.error || 'Unknown error');
     }
-  }, 3000);
+  } catch(e) {
+    out.style.cssText = 'margin-top:12px;padding:12px 16px;border-radius:8px;font-size:13px;background:rgba(248,81,73,.1);border:1px solid rgba(248,81,73,.3);color:#f85149;display:block';
+    out.textContent = '❌ Request failed.';
+  }
 }
 
 function checkAllDone() {
