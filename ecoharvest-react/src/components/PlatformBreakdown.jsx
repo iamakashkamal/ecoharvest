@@ -17,7 +17,7 @@ const PLATFORMS = [
 export default function PlatformBreakdown({ orders }) {
   const totals = useMemo(() => {
     const map = { shopee: 0, lazada: 0, tiktok: 0 };
-    orders.forEach(o => { map[o.platform] += o.total; });
+    orders.forEach(o => { map[o.platform] = (map[o.platform] || 0) + o.total; });
     return map;
   }, [orders]);
 
@@ -34,8 +34,7 @@ export default function PlatformBreakdown({ orders }) {
   };
 
   const donutOptions = {
-    responsive: true,
-    cutout: '70%',
+    responsive: true, cutout: '70%',
     plugins: {
       legend: { display: false },
       tooltip: {

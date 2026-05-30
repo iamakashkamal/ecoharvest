@@ -636,3 +636,121 @@ td { padding: 13px 14px; vertical-align: middle; }
   .hamburger { display: flex !important; }
   .topbar-actions .btn-ghost { display: none; }
 }
+
+/* ── Settings Page ────────────────────────────────────────────── */
+.settings-page {
+  padding: 24px 32px;
+  max-width: 960px;
+  margin: 0 auto;
+}
+.settings-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 28px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.settings-cards {
+  display: grid;
+  gap: 20px;
+}
+.settings-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  border-top: 3px solid var(--platform-color, var(--accent));
+  transition: box-shadow .2s;
+}
+.settings-card--connected {
+  border-top-color: var(--green);
+}
+.settings-card-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.settings-card-title { flex: 1; }
+.card-title { font-size: 1rem; font-weight: 700; }
+.card-sub { font-size: .8rem; color: var(--muted); margin-top: 2px; }
+.conn-ok { color: var(--green); font-weight: 600; }
+.conn-na { color: var(--muted); }
+.settings-docs-link {
+  font-size: .78rem;
+  color: var(--accent);
+  text-decoration: none;
+  opacity: .8;
+}
+.settings-docs-link:hover { opacity: 1; }
+.settings-fields {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+.settings-field label {
+  display: block;
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.settings-field input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: .88rem;
+  color: var(--text);
+  outline: none;
+  transition: border-color .2s;
+  box-sizing: border-box;
+}
+.settings-field input:focus { border-color: var(--accent); }
+.settings-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.settings-msg {
+  font-size: .82rem;
+  padding: 8px 12px;
+  border-radius: 8px;
+  margin-top: 8px;
+}
+.settings-msg--ok  { background: rgba(52,211,153,.15); color: var(--green); }
+.settings-msg--err { background: rgba(239,68,68,.12);  color: #f87171; }
+.lazada-oauth-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+.lazada-url-input {
+  flex: 1;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 9px 12px;
+  font-size: .85rem;
+  color: var(--text);
+  outline: none;
+}
+.lazada-url-input:focus { border-color: var(--accent); }
+.settings-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+  padding: 12px 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: .82rem;
+  color: var(--muted);
+}
+.settings-note code { font-family: monospace; color: var(--text); }

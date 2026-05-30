@@ -2,17 +2,16 @@ import { useEffect } from 'react';
 import { PLATFORM_META, STATUS_META } from '../data/orders';
 
 function fmtDate(d) {
-  return d.toLocaleDateString('en-SG', { day: '2-digit', month: 'short', year: 'numeric' });
+  return new Date(d).toLocaleDateString('en-SG', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 function Timeline({ status, date }) {
   const steps = [
-    { label: 'Order Placed',     icon: '📋' },
+    { label: 'Order Placed',      icon: '📋' },
     { label: 'Payment Confirmed', icon: '💳' },
     { label: 'Shipped Out',       icon: '📦' },
     { label: 'Delivered',         icon: '✅' },
   ];
-
   const order = ['Pending','Processing','Shipped','Delivered'];
   const idx   = order.indexOf(status);
 
@@ -22,10 +21,7 @@ function Timeline({ status, date }) {
         <h4 className="section-label">ORDER TIMELINE</h4>
         <div className="timeline-item">
           <div className="tl-dot done">✓</div>
-          <div className="tl-content">
-            <div className="tl-title">📋 Order Placed</div>
-            <div className="tl-time">{fmtDate(date)}</div>
-          </div>
+          <div className="tl-content"><div className="tl-title">📋 Order Placed</div><div className="tl-time">{fmtDate(date)}</div></div>
         </div>
         <div className="timeline-item">
           <div className="tl-dot cancelled">✕</div>
@@ -62,15 +58,15 @@ function Timeline({ status, date }) {
 
 export default function OrderModal({ order, onClose }) {
   useEffect(() => {
-    const onKey = e => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
+    const fn = e => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', fn);
+    return () => document.removeEventListener('keydown', fn);
   }, [onClose]);
 
   if (!order) return null;
 
-  const pm = PLATFORM_META[order.platform];
-  const sm = STATUS_META[order.status] || {};
+  const pm = PLATFORM_META[order.platform] || {};
+  const sm = STATUS_META[order.status]     || {};
 
   return (
     <div className="modal-backdrop open" onClick={e => e.target === e.currentTarget && onClose()}>
@@ -87,12 +83,12 @@ export default function OrderModal({ order, onClose }) {
         <div className="modal-body">
           <div className="detail-grid">
             {[
-              ['Customer',    order.customer],
-              ['Order Date',  fmtDate(order.date)],
-              ['Status',      null],
+              ['Customer',     order.customer],
+              ['Order Date',   fmtDate(order.date)],
+              ['Status',       null],
               ['Total Amount', `S$${order.total.toFixed(2)}`],
-              ['Platform',    pm.label],
-              ['Order ID',    order.orderId],
+              ['Platform',     pm.label],
+              ['Order ID',     order.orderId],
             ].map(([label, val]) => (
               <div className="detail-item" key={label}>
                 <label>{label.toUpperCase()}</label>
@@ -109,20 +105,25 @@ export default function OrderModal({ order, onClose }) {
 
           <div className="detail-products">
             <h4 className="section-label">ITEMS ORDERED</h4>
-            <div className="detail-product-row">
-              <div className="product-thumb" style={{ fontSize: 22 }}>{order.product.emoji}</div>
-              <div style={{ flex: 1 }}>
-                <div className="product-name">{order.product.name}</div>
-                <div className="product-sku">{order.product.sku}</div>
+            {(order.items || []).map((item, i) => (
+              <div className="detail-product-row" key={i}>
+                {item.image
+                  ? <img src={item.image} alt={item.name} style={{ width: 36, height: 36, borderRadius: 6, objectFit: 'cover' }} />
+                  : <div className="product-thumb" style={{ fontSize: 22 }}>📦</div>
+                }
+                <div style={{ flex: 1 }}>
+                  <div className="product-name">{item.name}</div>
+                  <div className="product-sku">{item.sku}</div>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <div className="amount">S${(item.price * item.qty).toFixed(2)}</div>
+                  <div className="product-sku">Qty: {item.qty} × S${item.price.toFixed(2)}</div>
+                </div>
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <div className="amount">S${order.total.toFixed(2)}</div>
-                <div className="product-sku">Qty: {order.qty} × S${order.price.toFixed(2)}</div>
-              </div>
-            </div>
+            ))}
             <div className="detail-product-row" style={{ justifyContent: 'flex-end' }}>
               <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 12, color: 'var(--muted)' }}>Subtotal</div>
+                <div style={{ fontSize: 12, color: 'var(--muted)' }}>Total</div>
                 <div className="amount" style={{ fontSize: 18 }}>S${order.total.toFixed(2)}</div>
               </div>
             </div>
