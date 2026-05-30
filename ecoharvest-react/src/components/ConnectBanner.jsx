@@ -1,33 +1,23 @@
 const SETUP = {
   shopee: {
-    color:   '#f05629',
-    name:    'Shopee SG',
-    abbr:    'S',
-    logo:    'pl-shopee',
-    vars:    ['SHOPEE_PARTNER_ID', 'SHOPEE_PARTNER_KEY', 'SHOPEE_SHOP_ID', 'SHOPEE_ACCESS_TOKEN'],
-    docsUrl: 'https://open.shopee.com/documents',
+    color:  '#f05629', name: 'Shopee SG',   abbr: 'S', logo: 'pl-shopee',
+    issue:  null, // fully configured
   },
   lazada: {
-    color:   '#5a67f2',
-    name:    'Lazada SG',
-    abbr:    'L',
-    logo:    'pl-lazada',
-    vars:    ['LAZADA_APP_KEY', 'LAZADA_APP_SECRET', 'LAZADA_ACCESS_TOKEN'],
-    docsUrl: 'https://open.lazada.com/apps/doc/doc.htm',
+    color:  '#5a67f2', name: 'Lazada SG',   abbr: 'L', logo: 'pl-lazada',
+    issue:  'Needs OAuth token',
   },
   tiktok: {
-    color:   '#69c9d0',
-    name:    'TikTok Shop',
-    abbr:    'T',
-    logo:    'pl-tiktok',
-    vars:    ['TIKTOK_APP_KEY', 'TIKTOK_APP_SECRET', 'TIKTOK_SHOP_ID', 'TIKTOK_ACCESS_TOKEN'],
-    docsUrl: 'https://partner.tiktokshop.com/docv2/page/63fb572d46fbd603108d2ca3',
+    color:  '#69c9d0', name: 'TikTok Shop', abbr: 'T', logo: 'pl-tiktok',
+    issue:  'Needs Shop ID',
   },
 };
 
 export default function ConnectBanner({ platformStatus, apiErrors }) {
   const disconnected = Object.entries(platformStatus).filter(([, v]) => !v);
-  if (!disconnected.length && !Object.keys(apiErrors).length) return null;
+  const hasErrors    = Object.keys(apiErrors).length > 0;
+
+  if (!disconnected.length && !hasErrors) return null;
 
   return (
     <div className="connect-banner">
@@ -36,30 +26,50 @@ export default function ConnectBanner({ platformStatus, apiErrors }) {
           <div className="connect-heading">
             <span className="connect-icon">🔌</span>
             <div>
-              <div className="connect-title">Connect your platforms</div>
+              <div className="connect-title">
+                {disconnected.length} platform{disconnected.length > 1 ? 's' : ''} not connected
+              </div>
               <div className="connect-sub">
-                Add credentials to your <code>.env</code> file and restart the server to pull live orders.
+                Open the{' '}
+                <a
+                  href="http://localhost:3001/setup"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="setup-link"
+                >
+                  Setup Wizard ↗
+                </a>
+                {' '}to connect them in one click — no manual editing needed.
               </div>
             </div>
+            <a
+              href="http://localhost:3001/setup"
+              target="_blank"
+              rel="noreferrer"
+              className="btn btn-primary setup-btn"
+            >
+              Open Setup Wizard ↗
+            </a>
           </div>
+
           <div className="connect-cards">
             {disconnected.map(([key]) => {
               const s = SETUP[key];
+              if (!s) return null;
               return (
                 <div className="connect-card" key={key} style={{ '--platform-color': s.color }}>
                   <div className="connect-card-header">
                     <div className={`platform-logo ${s.logo}`}>{s.abbr}</div>
                     <div>
                       <div className="connect-card-name">{s.name}</div>
-                      <div className="connect-card-status">Not connected</div>
+                      <div className="connect-card-status">{s.issue || 'Not connected'}</div>
                     </div>
-                    <a className="connect-docs-link" href={s.docsUrl} target="_blank" rel="noreferrer">Docs ↗</a>
                   </div>
-                  <div className="connect-vars">
-                    {s.vars.map(v => (
-                      <code key={v} className="connect-var">{v}</code>
-                    ))}
-                  </div>
+                  <p className="connect-card-hint">
+                    {key === 'tiktok' && 'The wizard will call the TikTok API to discover your Shop ID automatically.'}
+                    {key === 'lazada' && 'The wizard will walk you through a one-click OAuth login to get your access token.'}
+                    {key === 'shopee' && 'Check that all four Shopee credentials are set in your .env file.'}
+                  </p>
                 </div>
               );
             })}
@@ -67,7 +77,7 @@ export default function ConnectBanner({ platformStatus, apiErrors }) {
         </div>
       )}
 
-      {Object.entries(apiErrors).length > 0 && (
+      {hasErrors && (
         <div className="api-errors">
           {Object.entries(apiErrors).map(([platform, msg]) => (
             <div className="api-error-row" key={platform}>

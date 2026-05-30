@@ -4,6 +4,7 @@ import cors from 'cors';
 import shopeeRouter from './routes/shopee.js';
 import lazadaRouter from './routes/lazada.js';
 import tiktokRouter from './routes/tiktok.js';
+import setupRouter  from './setup.js';
 
 const app  = express();
 const PORT = process.env.PORT || 3001;
@@ -14,6 +15,7 @@ app.use(express.json());
 app.use('/api/shopee', shopeeRouter);
 app.use('/api/lazada', lazadaRouter);
 app.use('/api/tiktok', tiktokRouter);
+app.use('/setup',      setupRouter);
 
 // Aggregate: GET /api/orders?days=30
 app.get('/api/orders', async (req, res) => {

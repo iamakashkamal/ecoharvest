@@ -711,6 +711,12 @@ td { padding: 13px 14px; vertical-align: middle; }
 }
 .connect-docs-link:hover { text-decoration: underline; }
 
+.setup-link { color: var(--blue); font-weight: 600; }
+.setup-link:hover { text-decoration: underline; }
+.setup-btn { font-size: 13px; padding: 8px 14px; margin-left: auto; flex-shrink: 0; text-decoration: none; }
+
+.connect-card-hint { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.5; }
+
 .connect-vars { display: flex; flex-wrap: wrap; gap: 6px; }
 .connect-var {
   background: var(--bg);
