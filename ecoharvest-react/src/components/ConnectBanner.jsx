@@ -13,7 +13,7 @@ const SETUP = {
   },
 };
 
-export default function ConnectBanner({ platformStatus, apiErrors }) {
+export default function ConnectBanner({ platformStatus, apiErrors, onOpenSettings }) {
   const disconnected = Object.entries(platformStatus).filter(([, v]) => !v);
   const hasErrors    = Object.keys(apiErrors).length > 0;
 
@@ -30,26 +30,12 @@ export default function ConnectBanner({ platformStatus, apiErrors }) {
                 {disconnected.length} platform{disconnected.length > 1 ? 's' : ''} not connected
               </div>
               <div className="connect-sub">
-                Open the{' '}
-                <a
-                  href="http://localhost:3001/setup"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="setup-link"
-                >
-                  Setup Wizard ↗
-                </a>
-                {' '}to connect them in one click — no manual editing needed.
+                Open <strong>Platform Settings</strong> to enter your API credentials and connect each marketplace.
               </div>
             </div>
-            <a
-              href="http://localhost:3001/setup"
-              target="_blank"
-              rel="noreferrer"
-              className="btn btn-primary setup-btn"
-            >
-              Open Setup Wizard ↗
-            </a>
+            <button className="btn btn-primary setup-btn" onClick={onOpenSettings}>
+              ⚙ Platform Settings
+            </button>
           </div>
 
           <div className="connect-cards">

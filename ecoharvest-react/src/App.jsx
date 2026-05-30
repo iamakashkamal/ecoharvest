@@ -11,6 +11,7 @@ import TopProducts       from './components/TopProducts';
 import FulfilmentFunnel  from './components/FulfilmentFunnel';
 import ToastContainer    from './components/ToastContainer';
 import ConnectBanner     from './components/ConnectBanner';
+import SettingsPage      from './components/SettingsPage';
 import { useOrders }     from './hooks/useOrders';
 import { useFilters }    from './hooks/useFilters';
 import { useToasts }     from './hooks/useToasts';
@@ -66,6 +67,9 @@ export default function App() {
       {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
 
       <div className="main">
+        {activePage === 'settings' ? (
+          <SettingsPage onBack={() => setActivePage('dashboard')} />
+        ) : (<>
         <Topbar
           onToggleSidebar={() => setSidebarOpen(o => !o)}
           onSync={handleSync}
@@ -75,7 +79,7 @@ export default function App() {
         />
 
         <div className="content">
-          <ConnectBanner platformStatus={platformStatus} apiErrors={errors} />
+          <ConnectBanner platformStatus={platformStatus} apiErrors={errors} onOpenSettings={() => setActivePage('settings')} />
 
           <FilterBar
             platform={platform} setPlatform={setPlatform}
@@ -102,6 +106,7 @@ export default function App() {
             <FulfilmentFunnel orders={filtered} />
           </div>
         </div>
+        </>)}
       </div>
 
       <OrderModal order={selected} onClose={() => setSelected(null)} />

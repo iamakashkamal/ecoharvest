@@ -6,10 +6,11 @@ import http    from 'http';
 import fs      from 'fs';
 import path    from 'path';
 import { fileURLToPath } from 'url';
-import shopeeRouter from './routes/shopee.js';
-import lazadaRouter from './routes/lazada.js';
-import tiktokRouter from './routes/tiktok.js';
-import setupRouter  from './setup.js';
+import shopeeRouter   from './routes/shopee.js';
+import lazadaRouter   from './routes/lazada.js';
+import tiktokRouter   from './routes/tiktok.js';
+import setupRouter    from './setup.js';
+import settingsRouter from './routes/settings.js';
 
 const __dir    = path.dirname(fileURLToPath(import.meta.url));
 const PORT     = parseInt(process.env.PORT || 3001);
@@ -19,10 +20,11 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use('/api/shopee', shopeeRouter);
-app.use('/api/lazada', lazadaRouter);
-app.use('/api/tiktok', tiktokRouter);
-app.use('/setup',      setupRouter);
+app.use('/api/shopee',    shopeeRouter);
+app.use('/api/lazada',    lazadaRouter);
+app.use('/api/tiktok',    tiktokRouter);
+app.use('/setup',         setupRouter);
+app.use('/api/settings',  settingsRouter);
 
 // Aggregate: GET /api/orders?days=30
 app.get('/api/orders', async (req, res) => {
