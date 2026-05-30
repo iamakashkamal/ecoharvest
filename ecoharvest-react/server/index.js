@@ -74,6 +74,9 @@ http.createServer(app).listen(PORT, () => {
 const certPath = path.join(__dir, 'cert.pem');
 const keyPath  = path.join(__dir, 'key.pem');
 
+console.log(`Looking for certs at: ${certPath}`);
+console.log(`cert exists: ${fs.existsSync(certPath)}, key exists: ${fs.existsSync(keyPath)}`);
+
 if (fs.existsSync(certPath) && fs.existsSync(keyPath)) {
   const sslOptions = {
     cert: fs.readFileSync(certPath),
