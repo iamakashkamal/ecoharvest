@@ -1,0 +1,1500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EcoHarvest — Orders Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    /* ── Reset & Tokens ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0d1117;
+      --surface:   #161b22;
+      --surface2:  #1c2230;
+      --border:    #2a3241;
+      --text:      #e6edf3;
+      --muted:     #8b949e;
+      --shopee:    #f05629;
+      --lazada:    #0f146d;
+      --lazada-l:  #5a67f2;
+      --tiktok:    #010101;
+      --tiktok-l:  #ff0050;
+      --tiktok-b:  #69c9d0;
+      --green:     #3fb950;
+      --yellow:    #d29922;
+      --red:       #f85149;
+      --blue:      #58a6ff;
+      --purple:    #a371f7;
+      --radius:    12px;
+      --radius-sm: 8px;
+      --shadow:    0 4px 24px rgba(0,0,0,.45);
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+    }
+
+    /* ── Sidebar ────────────────────────────────────────────────── */
+    .sidebar {
+      width: 240px;
+      min-height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      padding: 24px 0;
+      position: fixed;
+      top: 0; left: 0; bottom: 0;
+      z-index: 100;
+      transition: transform .25s;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 20px 28px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo-icon {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, #3fb950, #58a6ff);
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+
+    .logo-text { font-weight: 700; font-size: 16px; }
+    .logo-sub  { font-size: 11px; color: var(--muted); }
+
+    nav { padding: 20px 12px; flex: 1; }
+
+    .nav-section { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: .8px; text-transform: uppercase; padding: 0 8px 8px; }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      font-size: 14px;
+      color: var(--muted);
+      transition: all .15s;
+      margin-bottom: 2px;
+    }
+
+    .nav-item:hover { background: var(--surface2); color: var(--text); }
+    .nav-item.active { background: rgba(88,166,255,.1); color: var(--blue); font-weight: 600; }
+    .nav-item .icon { width: 18px; text-align: center; font-size: 15px; }
+
+    .platform-badge {
+      display: inline-block;
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      margin-left: auto;
+    }
+
+    .sidebar-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .avatar {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #58a6ff, #a371f7);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700;
+    }
+
+    .user-info { flex: 1; }
+    .user-name  { font-size: 13px; font-weight: 600; }
+    .user-role  { font-size: 11px; color: var(--muted); }
+
+    /* ── Main ───────────────────────────────────────────────────── */
+    .main {
+      margin-left: 240px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ── Topbar ─────────────────────────────────────────────────── */
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 28px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .topbar-title { font-size: 18px; font-weight: 700; flex: 1; }
+    .topbar-sub   { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    .topbar-actions { display: flex; align-items: center; gap: 10px; }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 13px; font-weight: 600;
+      cursor: pointer;
+      border: none;
+      transition: all .15s;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--surface2); color: var(--text); }
+
+    .btn-primary {
+      background: var(--blue);
+      color: #fff;
+    }
+    .btn-primary:hover { opacity: .88; }
+
+    .live-badge {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      background: rgba(63,185,80,.12);
+      border: 1px solid rgba(63,185,80,.3);
+      font-size: 12px; font-weight: 600;
+      color: var(--green);
+    }
+
+    .pulse {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      animation: pulse 1.6s infinite;
+    }
+
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: .4; transform: scale(1.4); }
+    }
+
+    /* ── Content ────────────────────────────────────────────────── */
+    .content { padding: 28px; flex: 1; }
+
+    /* ── Platform Filter ────────────────────────────────────────── */
+    .filter-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+
+    .filter-label { font-size: 13px; color: var(--muted); margin-right: 4px; }
+
+    .chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+      transition: all .15s;
+    }
+    .chip:hover { border-color: var(--text); color: var(--text); }
+    .chip.active { color: #fff; border-color: transparent; }
+    .chip.all.active    { background: var(--blue); }
+    .chip.shopee.active { background: var(--shopee); }
+    .chip.lazada.active { background: var(--lazada-l); }
+    .chip.tiktok.active { background: linear-gradient(90deg, var(--tiktok-l), var(--tiktok-b)); }
+
+    .chip-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    .date-range {
+      margin-left: auto;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .date-range select {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    /* ── Stat Cards ─────────────────────────────────────────────── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      position: relative;
+      overflow: hidden;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: var(--accent, var(--blue));
+    }
+
+    .stat-icon {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: rgba(88,166,255,.1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      margin-bottom: 14px;
+    }
+
+    .stat-value { font-size: 26px; font-weight: 800; margin-bottom: 4px; }
+    .stat-label { font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+
+    .stat-change {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 12px; font-weight: 600;
+      padding: 3px 8px;
+      border-radius: 20px;
+    }
+    .stat-change.up   { background: rgba(63,185,80,.12); color: var(--green); }
+    .stat-change.down { background: rgba(248,81,73,.12);  color: var(--red); }
+
+    /* ── Charts Row ─────────────────────────────────────────────── */
+    .charts-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+    }
+
+    .card-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .card-title { font-size: 15px; font-weight: 700; }
+    .card-sub   { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    /* ── Platform Breakdown ─────────────────────────────────────── */
+    .platform-list { display: flex; flex-direction: column; gap: 14px; margin-top: 4px; }
+
+    .platform-row { display: flex; flex-direction: column; gap: 6px; }
+
+    .platform-info { display: flex; align-items: center; gap: 8px; }
+
+    .platform-logo {
+      width: 28px; height: 28px;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 800;
+      flex-shrink: 0;
+    }
+
+    .pl-shopee { background: var(--shopee); color: #fff; }
+    .pl-lazada { background: var(--lazada-l); color: #fff; }
+    .pl-tiktok { background: #111; color: var(--tiktok-b); border: 1px solid var(--tiktok-b); }
+
+    .platform-name { font-size: 13px; font-weight: 600; }
+    .platform-amt  { font-size: 13px; font-weight: 700; margin-left: auto; }
+
+    .progress-bar {
+      height: 6px;
+      border-radius: 3px;
+      background: var(--surface2);
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width .6s ease;
+    }
+
+    /* ── Orders Table ───────────────────────────────────────────── */
+    .orders-card { margin-bottom: 24px; }
+
+    .table-toolbar {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .search-box {
+      display: flex; align-items: center; gap: 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 8px 12px;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .search-box input {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-size: 13px;
+      width: 100%;
+    }
+
+    .search-box input::placeholder { color: var(--muted); }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead th {
+      text-align: left;
+      padding: 10px 14px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .1s;
+      cursor: pointer;
+    }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: var(--surface2); }
+
+    td {
+      padding: 13px 14px;
+      vertical-align: middle;
+    }
+
+    .order-id { font-weight: 700; color: var(--blue); font-family: monospace; }
+
+    .platform-pill {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 9px;
+      border-radius: 20px;
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .pp-shopee { background: rgba(240,86,41,.15); color: var(--shopee); }
+    .pp-lazada { background: rgba(90,103,242,.15); color: var(--lazada-l); }
+    .pp-tiktok { background: rgba(105,201,208,.1); color: var(--tiktok-b); }
+
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px; font-weight: 600;
+    }
+
+    .s-pending    { background: rgba(210,153,34,.12); color: var(--yellow); }
+    .s-processing { background: rgba(88,166,255,.12); color: var(--blue); }
+    .s-shipped    { background: rgba(163,113,247,.12); color: var(--purple); }
+    .s-delivered  { background: rgba(63,185,80,.12);  color: var(--green); }
+    .s-cancelled  { background: rgba(248,81,73,.12);  color: var(--red); }
+    .s-returned   { background: rgba(139,148,158,.12); color: var(--muted); }
+
+    .status-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+    .product-cell { display: flex; align-items: center; gap: 10px; }
+
+    .product-thumb {
+      width: 36px; height: 36px;
+      border-radius: 6px;
+      background: var(--surface2);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .product-name { font-weight: 600; line-height: 1.3; }
+    .product-sku  { font-size: 11px; color: var(--muted); }
+
+    .amount { font-weight: 700; }
+
+    /* ── Pagination ─────────────────────────────────────────────── */
+    .pagination {
+      display: flex; align-items: center; justify-content: space-between;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .page-btns { display: flex; gap: 6px; }
+
+    .page-btn {
+      width: 32px; height: 32px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--muted);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px;
+      transition: all .15s;
+    }
+    .page-btn:hover  { background: var(--surface2); color: var(--text); }
+    .page-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+    /* ── Bottom Row ─────────────────────────────────────────────── */
+    .bottom-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    /* ── Top Products ───────────────────────────────────────────── */
+    .top-product-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .top-product-row:last-child { border-bottom: none; }
+
+    .rank {
+      font-size: 13px; font-weight: 800; color: var(--muted);
+      width: 20px; text-align: center;
+    }
+    .rank.gold   { color: #f0b429; }
+    .rank.silver { color: #c0c0c0; }
+    .rank.bronze { color: #cd7f32; }
+
+    .tp-emoji { font-size: 22px; }
+
+    .tp-info { flex: 1; }
+    .tp-name { font-size: 13px; font-weight: 600; }
+    .tp-meta { font-size: 11px; color: var(--muted); }
+
+    .tp-amt { font-size: 14px; font-weight: 700; }
+    .tp-units { font-size: 11px; color: var(--muted); text-align: right; }
+
+    /* ── Fulfillment Funnel ─────────────────────────────────────── */
+    .funnel-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .funnel-row:last-child { border-bottom: none; }
+
+    .funnel-label { font-size: 13px; font-weight: 600; width: 110px; flex-shrink: 0; }
+    .funnel-bar-wrap { flex: 1; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+    .funnel-bar { height: 100%; border-radius: 4px; }
+    .funnel-count { font-size: 13px; font-weight: 700; width: 40px; text-align: right; }
+    .funnel-pct { font-size: 11px; color: var(--muted); width: 38px; text-align: right; }
+
+    /* ── Notification Toast ─────────────────────────────────────── */
+    #toast-container {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      display: flex; flex-direction: column; gap: 10px;
+      z-index: 999;
+    }
+
+    .toast {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 3px solid var(--blue);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      display: flex; align-items: flex-start; gap: 10px;
+      min-width: 300px;
+      max-width: 380px;
+      box-shadow: var(--shadow);
+      animation: slideIn .3s ease;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateX(110%); opacity: 0; }
+      to   { transform: translateX(0);   opacity: 1; }
+    }
+
+    .toast-icon { font-size: 18px; }
+    .toast-content { flex: 1; }
+    .toast-title { font-size: 13px; font-weight: 700; margin-bottom: 2px; }
+    .toast-body  { font-size: 12px; color: var(--muted); }
+
+    /* ── Modal ──────────────────────────────────────────────────── */
+    .modal-backdrop {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(0,0,0,.7);
+      z-index: 200;
+      align-items: center; justify-content: center;
+    }
+    .modal-backdrop.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      width: 520px;
+      max-width: 95vw;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: var(--shadow);
+    }
+
+    .modal-header {
+      padding: 20px 24px 16px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: flex-start; justify-content: space-between;
+    }
+
+    .modal-close {
+      background: none; border: none;
+      color: var(--muted); font-size: 20px;
+      cursor: pointer; line-height: 1;
+    }
+    .modal-close:hover { color: var(--text); }
+
+    .modal-body { padding: 24px; }
+
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .detail-item label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 4px; text-transform: uppercase; letter-spacing: .5px; }
+    .detail-item span  { font-size: 14px; font-weight: 600; }
+
+    .detail-products { margin-top: 4px; }
+    .detail-products h4 { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+
+    .detail-product-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .timeline { margin-top: 20px; }
+    .timeline h4 { font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+
+    .timeline-item {
+      display: flex; gap: 12px;
+      padding-bottom: 14px;
+      position: relative;
+    }
+    .timeline-item::before {
+      content: '';
+      position: absolute;
+      left: 11px; top: 22px; bottom: 0;
+      width: 1px; background: var(--border);
+    }
+    .timeline-item:last-child::before { display: none; }
+
+    .tl-dot {
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      background: var(--surface2);
+      border: 2px solid var(--border);
+      flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px;
+    }
+    .tl-dot.done { background: var(--green); border-color: var(--green); color: #fff; }
+    .tl-dot.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+
+    .tl-content { flex: 1; }
+    .tl-title { font-size: 13px; font-weight: 600; }
+    .tl-time  { font-size: 11px; color: var(--muted); }
+
+    /* ── Scrollbar ──────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ── Responsive ─────────────────────────────────────────────── */
+    @media (max-width: 1024px) {
+      .charts-row  { grid-template-columns: 1fr; }
+      .bottom-row  { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-100%); }
+      .sidebar.open { transform: translateX(0); }
+      .main { margin-left: 0; }
+      .topbar { padding: 14px 16px; }
+      .content { padding: 16px; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .hamburger { display: flex !important; }
+    }
+
+    .hamburger {
+      display: none;
+      background: none; border: none;
+      color: var(--text); font-size: 20px;
+      cursor: pointer; padding: 4px;
+    }
+
+    /* ── Skeleton Loading ───────────────────────────────────────── */
+    .skeleton {
+      background: linear-gradient(90deg, var(--surface2) 25%, var(--border) 50%, var(--surface2) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 4px;
+    }
+
+    @keyframes shimmer {
+      0%   { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Sidebar ─────────────────────────────────────────────────── -->
+<aside class="sidebar" id="sidebar">
+  <div class="logo">
+    <div class="logo-icon">🌿</div>
+    <div>
+      <div class="logo-text">EcoHarvest</div>
+      <div class="logo-sub">Seller Dashboard</div>
+    </div>
+  </div>
+
+  <nav>
+    <div class="nav-section" style="margin-top:0">Overview</div>
+    <div class="nav-item active" onclick="setPage('dashboard')">
+      <span class="icon">📊</span> Dashboard
+    </div>
+    <div class="nav-item" onclick="setPage('analytics')">
+      <span class="icon">📈</span> Analytics
+    </div>
+
+    <div class="nav-section" style="margin-top:20px">Platforms</div>
+    <div class="nav-item" onclick="filterPlatform('shopee')">
+      <span class="icon">🛒</span> Shopee SG
+      <span class="platform-badge" style="background:var(--shopee)"></span>
+    </div>
+    <div class="nav-item" onclick="filterPlatform('lazada')">
+      <span class="icon">🏪</span> Lazada SG
+      <span class="platform-badge" style="background:var(--lazada-l)"></span>
+    </div>
+    <div class="nav-item" onclick="filterPlatform('tiktok')">
+      <span class="icon">🎵</span> TikTok Shop
+      <span class="platform-badge" style="background:var(--tiktok-b)"></span>
+    </div>
+
+    <div class="nav-section" style="margin-top:20px">Management</div>
+    <div class="nav-item">
+      <span class="icon">📦</span> Inventory
+    </div>
+    <div class="nav-item">
+      <span class="icon">🚚</span> Fulfilment
+    </div>
+    <div class="nav-item">
+      <span class="icon">💬</span> Customer Chat
+    </div>
+    <div class="nav-item">
+      <span class="icon">⚙️</span> Settings
+    </div>
+  </nav>
+
+  <div class="sidebar-footer">
+    <div class="avatar">EH</div>
+    <div class="user-info">
+      <div class="user-name">EcoHarvest SG</div>
+      <div class="user-role">Admin · Pro Plan</div>
+    </div>
+  </div>
+</aside>
+
+<!-- ── Main ────────────────────────────────────────────────────── -->
+<div class="main">
+
+  <!-- Topbar -->
+  <header class="topbar">
+    <button class="hamburger" id="hamburger" onclick="toggleSidebar()">☰</button>
+    <div>
+      <div class="topbar-title">Orders Overview</div>
+      <div class="topbar-sub">Last updated: <span id="last-updated">just now</span></div>
+    </div>
+    <div class="topbar-actions">
+      <div class="live-badge"><div class="pulse"></div>Live</div>
+      <button class="btn btn-ghost" onclick="exportCSV()">⬇ Export</button>
+      <button class="btn btn-primary" onclick="syncNow()">↻ Sync Now</button>
+    </div>
+  </header>
+
+  <!-- Content -->
+  <div class="content">
+
+    <!-- Filter Row -->
+    <div class="filter-row">
+      <span class="filter-label">Platform:</span>
+      <div class="chip all active" id="chip-all"    onclick="filterPlatform('all')">
+        All Platforms
+      </div>
+      <div class="chip shopee" id="chip-shopee" onclick="filterPlatform('shopee')">
+        <span class="chip-dot" style="background:var(--shopee)"></span> Shopee SG
+      </div>
+      <div class="chip lazada" id="chip-lazada" onclick="filterPlatform('lazada')">
+        <span class="chip-dot" style="background:var(--lazada-l)"></span> Lazada SG
+      </div>
+      <div class="chip tiktok" id="chip-tiktok" onclick="filterPlatform('tiktok')">
+        <span class="chip-dot" style="background:var(--tiktok-b)"></span> TikTok Shop
+      </div>
+
+      <div class="date-range">
+        <select id="date-range" onchange="updateDateRange()">
+          <option value="7">Last 7 days</option>
+          <option value="30" selected>Last 30 days</option>
+          <option value="90">Last 90 days</option>
+          <option value="365">This year</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Stat Cards -->
+    <div class="stats-grid">
+      <div class="stat-card" style="--accent: var(--blue)">
+        <div class="stat-icon" style="background:rgba(88,166,255,.1)">📦</div>
+        <div class="stat-value" id="stat-orders">—</div>
+        <div class="stat-label">Total Orders</div>
+        <span class="stat-change up" id="stat-orders-change">↑ 12.4%</span>
+      </div>
+      <div class="stat-card" style="--accent: var(--green)">
+        <div class="stat-icon" style="background:rgba(63,185,80,.1)">💰</div>
+        <div class="stat-value" id="stat-revenue">—</div>
+        <div class="stat-label">Total Revenue</div>
+        <span class="stat-change up" id="stat-revenue-change">↑ 18.7%</span>
+      </div>
+      <div class="stat-card" style="--accent: var(--purple)">
+        <div class="stat-icon" style="background:rgba(163,113,247,.1)">🛍</div>
+        <div class="stat-value" id="stat-aov">—</div>
+        <div class="stat-label">Avg Order Value</div>
+        <span class="stat-change up" id="stat-aov-change">↑ 5.2%</span>
+      </div>
+      <div class="stat-card" style="--accent: var(--green)">
+        <div class="stat-icon" style="background:rgba(63,185,80,.1)">✅</div>
+        <div class="stat-value" id="stat-delivered">—</div>
+        <div class="stat-label">Delivered</div>
+        <span class="stat-change up">↑ 3.1%</span>
+      </div>
+      <div class="stat-card" style="--accent: var(--yellow)">
+        <div class="stat-icon" style="background:rgba(210,153,34,.1)">⏳</div>
+        <div class="stat-value" id="stat-pending">—</div>
+        <div class="stat-label">Pending / Processing</div>
+        <span class="stat-change down">↓ 2.8%</span>
+      </div>
+      <div class="stat-card" style="--accent: var(--red)">
+        <div class="stat-icon" style="background:rgba(248,81,73,.1)">↩️</div>
+        <div class="stat-value" id="stat-returns">—</div>
+        <div class="stat-label">Returns / Cancelled</div>
+        <span class="stat-change down">↓ 1.2%</span>
+      </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="charts-row">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Revenue Over Time</div>
+            <div class="card-sub">Daily revenue by platform (SGD)</div>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center;font-size:12px">
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:3px;background:var(--shopee);border-radius:2px;display:inline-block"></span>Shopee</span>
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:3px;background:var(--lazada-l);border-radius:2px;display:inline-block"></span>Lazada</span>
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:3px;background:var(--tiktok-b);border-radius:2px;display:inline-block"></span>TikTok</span>
+          </div>
+        </div>
+        <canvas id="revenue-chart" height="90"></canvas>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Platform Share</div>
+            <div class="card-sub">Revenue distribution</div>
+          </div>
+        </div>
+        <canvas id="donut-chart" height="160"></canvas>
+        <div class="platform-list" style="margin-top:16px">
+          <div class="platform-row" id="pb-shopee">
+            <div class="platform-info">
+              <div class="platform-logo pl-shopee">S</div>
+              <span class="platform-name">Shopee SG</span>
+              <span class="platform-amt" id="amt-shopee">—</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="prog-shopee" style="background:var(--shopee);width:0%"></div>
+            </div>
+          </div>
+          <div class="platform-row" id="pb-lazada">
+            <div class="platform-info">
+              <div class="platform-logo pl-lazada">L</div>
+              <span class="platform-name">Lazada SG</span>
+              <span class="platform-amt" id="amt-lazada">—</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="prog-lazada" style="background:var(--lazada-l);width:0%"></div>
+            </div>
+          </div>
+          <div class="platform-row" id="pb-tiktok">
+            <div class="platform-info">
+              <div class="platform-logo pl-tiktok">T</div>
+              <span class="platform-name">TikTok Shop</span>
+              <span class="platform-amt" id="amt-tiktok">—</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="prog-tiktok" style="background:linear-gradient(90deg,var(--tiktok-l),var(--tiktok-b));width:0%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="card orders-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Recent Orders</div>
+          <div class="card-sub" id="orders-count-label">Showing all orders</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <select id="status-filter" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 10px;border-radius:var(--radius-sm);font-size:12px" onchange="renderTable()">
+            <option value="">All Status</option>
+            <option>Pending</option>
+            <option>Processing</option>
+            <option>Shipped</option>
+            <option>Delivered</option>
+            <option>Cancelled</option>
+            <option>Returned</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="table-toolbar">
+        <div class="search-box">
+          <span>🔍</span>
+          <input type="text" id="search-input" placeholder="Search order ID, product, customer…" oninput="renderTable()" />
+        </div>
+      </div>
+
+      <div style="overflow-x:auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Platform</th>
+              <th>Product</th>
+              <th>Customer</th>
+              <th>Date</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="orders-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <div id="page-info">Showing 1–15 of 0 orders</div>
+        <div class="page-btns" id="page-btns"></div>
+      </div>
+    </div>
+
+    <!-- Bottom Row -->
+    <div class="bottom-row">
+      <!-- Top Products -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Top Products</div>
+            <div class="card-sub">By revenue across all platforms</div>
+          </div>
+        </div>
+        <div id="top-products-list"></div>
+      </div>
+
+      <!-- Fulfillment Funnel -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Order Fulfilment</div>
+            <div class="card-sub">Status breakdown</div>
+          </div>
+        </div>
+        <div id="funnel-list"></div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- ── Order Detail Modal ──────────────────────────────────────── -->
+<div class="modal-backdrop" id="modal-backdrop" onclick="closeModal(event)">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div>
+        <div class="card-title" id="modal-title">Order Details</div>
+        <div class="card-sub" id="modal-sub"></div>
+      </div>
+      <button class="modal-close" onclick="closeModalDirect()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<!-- ── Toast Container ─────────────────────────────────────────── -->
+<div id="toast-container"></div>
+
+<script>
+// ── Data ────────────────────────────────────────────────────────
+
+const PRODUCTS = [
+  { id: 'EH-001', name: 'Organic Greens Blend', emoji: '🥬', sku: 'SKU-001' },
+  { id: 'EH-002', name: 'Wild Berry Superfood Mix', emoji: '🫐', sku: 'SKU-002' },
+  { id: 'EH-003', name: 'Matcha Ceremonial Grade', emoji: '🍵', sku: 'SKU-003' },
+  { id: 'EH-004', name: 'Spirulina Powder 500g', emoji: '💚', sku: 'SKU-004' },
+  { id: 'EH-005', name: 'Moringa Leaf Capsules', emoji: '🌿', sku: 'SKU-005' },
+  { id: 'EH-006', name: 'Ashwagandha Root Extract', emoji: '🌱', sku: 'SKU-006' },
+  { id: 'EH-007', name: 'Turmeric Golden Latte', emoji: '✨', sku: 'SKU-007' },
+  { id: 'EH-008', name: 'Collagen Peptides Boost', emoji: '💊', sku: 'SKU-008' },
+  { id: 'EH-009', name: 'Chlorella Detox Tablets', emoji: '🔵', sku: 'SKU-009' },
+  { id: 'EH-010', name: 'Lion\'s Mane Mushroom', emoji: '🍄', sku: 'SKU-010' },
+];
+
+const PLATFORMS  = ['shopee', 'lazada', 'tiktok'];
+const STATUSES   = ['Pending','Processing','Shipped','Delivered','Delivered','Delivered','Cancelled','Returned'];
+const CUSTOMERS  = [
+  'Sarah Tan','Wei Ming','Priya Nair','Ahmad Bin','Kelly Lim','James Ong',
+  'Nurul Huda','Chen Wei','Raj Kumar','Mei Ling','David Ho','Farah Binte',
+  'Marcus Lee','Siti Rohani','Kevin Goh','Aisha Begum','Terrence Wee','Yi Lin',
+  'Brendan Chua','Lakshmi Devi','Hiroshi Tanaka','Emma Poh','Ryan Ng','Zara Ali',
+];
+
+// Generate 120 realistic orders
+const seedRng = (seed => {
+  let s = seed;
+  return () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
+})(42);
+
+function rndInt(min, max) { return Math.floor(seedRng() * (max - min + 1)) + min; }
+function rndEl(arr) { return arr[Math.floor(seedRng() * arr.length)]; }
+
+const now = new Date('2026-05-30');
+
+const ALL_ORDERS = Array.from({ length: 120 }, (_, i) => {
+  const daysAgo = rndInt(0, 89);
+  const d = new Date(now);
+  d.setDate(d.getDate() - daysAgo);
+  const platform = rndEl(PLATFORMS);
+  const product  = rndEl(PRODUCTS);
+  const qty      = rndInt(1, 5);
+  const price    = parseFloat((rndInt(18, 120) + seedRng()).toFixed(2));
+  const status   = rndEl(STATUSES);
+
+  let prefix = platform === 'shopee' ? 'SPE' : platform === 'lazada' ? 'LZD' : 'TTK';
+  const orderId = `${prefix}-${String(i + 1001).padStart(5,'0')}`;
+
+  return { orderId, platform, product, qty, price, total: +(price * qty).toFixed(2), status, customer: rndEl(CUSTOMERS), date: d };
+});
+
+// Sort newest first
+ALL_ORDERS.sort((a, b) => b.date - a.date);
+
+// ── State ────────────────────────────────────────────────────────
+let currentPlatform = 'all';
+let currentPage     = 1;
+const PAGE_SIZE     = 15;
+
+// ── Filters ──────────────────────────────────────────────────────
+function getFiltered() {
+  const search = document.getElementById('search-input').value.toLowerCase();
+  const status = document.getElementById('status-filter').value;
+  const days   = parseInt(document.getElementById('date-range').value);
+  const cutoff = new Date(now); cutoff.setDate(cutoff.getDate() - days);
+
+  return ALL_ORDERS.filter(o => {
+    if (currentPlatform !== 'all' && o.platform !== currentPlatform) return false;
+    if (status && o.status !== status) return false;
+    if (o.date < cutoff) return false;
+    if (search && !o.orderId.toLowerCase().includes(search) &&
+        !o.product.name.toLowerCase().includes(search) &&
+        !o.customer.toLowerCase().includes(search)) return false;
+    return true;
+  });
+}
+
+function filterPlatform(p) {
+  currentPlatform = p;
+  currentPage = 1;
+  ['all','shopee','lazada','tiktok'].forEach(x => {
+    document.getElementById('chip-' + x).classList.toggle('active', x === p);
+  });
+  updateAll();
+}
+
+function updateDateRange() { currentPage = 1; updateAll(); }
+
+// ── Stats ─────────────────────────────────────────────────────────
+function updateStats() {
+  const orders = getFiltered();
+  const total   = orders.length;
+  const revenue = orders.reduce((s, o) => s + o.total, 0);
+  const aov     = total ? revenue / total : 0;
+  const delivered = orders.filter(o => o.status === 'Delivered').length;
+  const pending   = orders.filter(o => o.status === 'Pending' || o.status === 'Processing').length;
+  const returns   = orders.filter(o => o.status === 'Cancelled' || o.status === 'Returned').length;
+
+  document.getElementById('stat-orders').textContent   = total.toLocaleString();
+  document.getElementById('stat-revenue').textContent  = 'S$' + revenue.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  document.getElementById('stat-aov').textContent      = 'S$' + aov.toFixed(2);
+  document.getElementById('stat-delivered').textContent= delivered.toLocaleString();
+  document.getElementById('stat-pending').textContent  = pending.toLocaleString();
+  document.getElementById('stat-returns').textContent  = returns.toLocaleString();
+}
+
+// ── Platform Breakdown ────────────────────────────────────────────
+function updateBreakdown() {
+  const orders = getFiltered();
+  const byPlat = { shopee: 0, lazada: 0, tiktok: 0 };
+  orders.forEach(o => byPlat[o.platform] += o.total);
+  const total = byPlat.shopee + byPlat.lazada + byPlat.tiktok || 1;
+
+  ['shopee','lazada','tiktok'].forEach(p => {
+    document.getElementById('amt-' + p).textContent = 'S$' + byPlat[p].toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    document.getElementById('prog-' + p).style.width = (byPlat[p] / total * 100).toFixed(1) + '%';
+  });
+
+  // Update donut
+  donutChart.data.datasets[0].data = [byPlat.shopee, byPlat.lazada, byPlat.tiktok];
+  donutChart.update();
+}
+
+// ── Table ──────────────────────────────────────────────────────────
+function fmtDate(d) {
+  return d.toLocaleDateString('en-SG', { day:'2-digit', month:'short', year:'numeric' });
+}
+
+function statusClass(s) {
+  return { Pending:'s-pending', Processing:'s-processing', Shipped:'s-shipped',
+           Delivered:'s-delivered', Cancelled:'s-cancelled', Returned:'s-returned' }[s] || '';
+}
+
+function platformClass(p) {
+  return { shopee:'pp-shopee', lazada:'pp-lazada', tiktok:'pp-tiktok' }[p] || '';
+}
+function platformLabel(p) {
+  return { shopee:'Shopee SG', lazada:'Lazada SG', tiktok:'TikTok' }[p] || p;
+}
+
+function renderTable() {
+  const filtered = getFiltered();
+  const total    = filtered.length;
+  const pages    = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  currentPage    = Math.min(currentPage, pages);
+
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const slice = filtered.slice(start, start + PAGE_SIZE);
+
+  document.getElementById('orders-count-label').textContent =
+    `Showing ${Math.min(start + 1, total)}–${Math.min(start + PAGE_SIZE, total)} of ${total} orders`;
+  document.getElementById('page-info').textContent =
+    `Showing ${Math.min(start + 1, total)}–${Math.min(start + PAGE_SIZE, total)} of ${total} orders`;
+
+  const tbody = document.getElementById('orders-tbody');
+  tbody.innerHTML = slice.map(o => `
+    <tr onclick="openModal('${o.orderId}')">
+      <td><span class="order-id">${o.orderId}</span></td>
+      <td><span class="platform-pill ${platformClass(o.platform)}">${platformLabel(o.platform)}</span></td>
+      <td>
+        <div class="product-cell">
+          <div class="product-thumb">${o.product.emoji}</div>
+          <div>
+            <div class="product-name">${o.product.name}</div>
+            <div class="product-sku">${o.product.sku} · Qty ${o.qty}</div>
+          </div>
+        </div>
+      </td>
+      <td>${o.customer}</td>
+      <td>${fmtDate(o.date)}</td>
+      <td><span class="amount">S$${o.total.toFixed(2)}</span></td>
+      <td><span class="status-badge ${statusClass(o.status)}"><span class="status-dot"></span>${o.status}</span></td>
+      <td><button class="btn btn-ghost" style="padding:5px 10px;font-size:12px" onclick="event.stopPropagation();openModal('${o.orderId}')">View</button></td>
+    </tr>
+  `).join('');
+
+  // Pagination
+  const pb = document.getElementById('page-btns');
+  pb.innerHTML = '';
+  const addBtn = (label, page, active) => {
+    const b = document.createElement('button');
+    b.className = 'page-btn' + (active ? ' active' : '');
+    b.textContent = label;
+    b.onclick = () => { currentPage = page; renderTable(); };
+    b.disabled = page < 1 || page > pages;
+    pb.appendChild(b);
+  };
+  addBtn('‹', currentPage - 1, false);
+  const range = [...new Set([1, currentPage - 1, currentPage, currentPage + 1, pages].filter(p => p >= 1 && p <= pages))].sort((a,b)=>a-b);
+  let prev = 0;
+  range.forEach(p => {
+    if (prev && p - prev > 1) {
+      const dots = document.createElement('button');
+      dots.className = 'page-btn'; dots.textContent = '…'; dots.disabled = true;
+      pb.appendChild(dots);
+    }
+    addBtn(p, p, p === currentPage);
+    prev = p;
+  });
+  addBtn('›', currentPage + 1, false);
+}
+
+// ── Revenue Chart ─────────────────────────────────────────────────
+let revenueChart, donutChart;
+
+function buildCharts() {
+  // Revenue line chart: last 30 days
+  const ctx1 = document.getElementById('revenue-chart').getContext('2d');
+  const labels = [];
+  const shopeeData = [], lazadaData = [], tiktokData = [];
+
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(now); d.setDate(d.getDate() - i);
+    labels.push(d.toLocaleDateString('en-SG', { day:'2-digit', month:'short' }));
+    const dayOrders = ALL_ORDERS.filter(o => o.date.toDateString() === d.toDateString());
+    shopeeData.push(+dayOrders.filter(o => o.platform==='shopee').reduce((s,o)=>s+o.total,0).toFixed(2));
+    lazadaData.push(+dayOrders.filter(o => o.platform==='lazada').reduce((s,o)=>s+o.total,0).toFixed(2));
+    tiktokData.push(+dayOrders.filter(o => o.platform==='tiktok').reduce((s,o)=>s+o.total,0).toFixed(2));
+  }
+
+  revenueChart = new Chart(ctx1, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label:'Shopee', data: shopeeData, borderColor:'#f05629', backgroundColor:'rgba(240,86,41,.08)', tension:.4, pointRadius:0, borderWidth:2, fill:true },
+        { label:'Lazada', data: lazadaData, borderColor:'#5a67f2', backgroundColor:'rgba(90,103,242,.08)', tension:.4, pointRadius:0, borderWidth:2, fill:true },
+        { label:'TikTok', data: tiktokData, borderColor:'#69c9d0', backgroundColor:'rgba(105,201,208,.05)', tension:.4, pointRadius:0, borderWidth:2, fill:true },
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode:'index', intersect:false },
+      plugins: { legend:{ display:false }, tooltip:{ backgroundColor:'#1c2230', borderColor:'#2a3241', borderWidth:1, titleColor:'#e6edf3', bodyColor:'#8b949e', callbacks:{ label: ctx => ` S$${ctx.parsed.y.toFixed(2)}` } } },
+      scales: {
+        x: { grid:{ color:'rgba(42,50,65,.5)' }, ticks:{ color:'#8b949e', font:{size:11}, maxTicksLimit:8 } },
+        y: { grid:{ color:'rgba(42,50,65,.5)' }, ticks:{ color:'#8b949e', font:{size:11}, callback: v => 'S$'+v } }
+      }
+    }
+  });
+
+  // Donut chart
+  const ctx2 = document.getElementById('donut-chart').getContext('2d');
+  donutChart = new Chart(ctx2, {
+    type: 'doughnut',
+    data: {
+      labels: ['Shopee SG','Lazada SG','TikTok Shop'],
+      datasets: [{ data:[0,0,0], backgroundColor:['#f05629','#5a67f2','#69c9d0'], borderWidth:0, hoverOffset:6 }]
+    },
+    options: {
+      responsive: true,
+      cutout: '70%',
+      plugins: {
+        legend: { display:false },
+        tooltip: { backgroundColor:'#1c2230', borderColor:'#2a3241', borderWidth:1, titleColor:'#e6edf3', bodyColor:'#8b949e', callbacks:{ label: ctx => ` S$${ctx.parsed.toFixed(2)}` } }
+      }
+    }
+  });
+}
+
+// ── Top Products ──────────────────────────────────────────────────
+function updateTopProducts() {
+  const orders = getFiltered();
+  const map = {};
+  orders.forEach(o => {
+    if (!map[o.product.id]) map[o.product.id] = { ...o.product, revenue:0, units:0 };
+    map[o.product.id].revenue += o.total;
+    map[o.product.id].units   += o.qty;
+  });
+
+  const sorted = Object.values(map).sort((a,b) => b.revenue - a.revenue).slice(0, 6);
+  const rankClass = i => i===0?'gold':i===1?'silver':i===2?'bronze':'';
+
+  document.getElementById('top-products-list').innerHTML = sorted.map((p, i) => `
+    <div class="top-product-row">
+      <div class="rank ${rankClass(i)}">#${i+1}</div>
+      <div class="tp-emoji">${p.emoji}</div>
+      <div class="tp-info">
+        <div class="tp-name">${p.name}</div>
+        <div class="tp-meta">${p.sku}</div>
+      </div>
+      <div>
+        <div class="tp-amt">S$${p.revenue.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g,',')}</div>
+        <div class="tp-units">${p.units} units</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ── Fulfillment Funnel ────────────────────────────────────────────
+function updateFunnel() {
+  const orders = getFiltered();
+  const total  = orders.length || 1;
+  const statuses = [
+    { label:'Pending',    color:'var(--yellow)', count: orders.filter(o=>o.status==='Pending').length },
+    { label:'Processing', color:'var(--blue)',   count: orders.filter(o=>o.status==='Processing').length },
+    { label:'Shipped',    color:'var(--purple)', count: orders.filter(o=>o.status==='Shipped').length },
+    { label:'Delivered',  color:'var(--green)',  count: orders.filter(o=>o.status==='Delivered').length },
+    { label:'Cancelled',  color:'var(--red)',    count: orders.filter(o=>o.status==='Cancelled').length },
+    { label:'Returned',   color:'var(--muted)',  count: orders.filter(o=>o.status==='Returned').length },
+  ];
+
+  document.getElementById('funnel-list').innerHTML = statuses.map(s => `
+    <div class="funnel-row">
+      <div class="funnel-label">${s.label}</div>
+      <div class="funnel-bar-wrap">
+        <div class="funnel-bar" style="width:${(s.count/total*100).toFixed(1)}%;background:${s.color}"></div>
+      </div>
+      <div class="funnel-count">${s.count}</div>
+      <div class="funnel-pct">${(s.count/total*100).toFixed(0)}%</div>
+    </div>
+  `).join('');
+}
+
+// ── Modal ──────────────────────────────────────────────────────────
+function openModal(orderId) {
+  const o = ALL_ORDERS.find(x => x.orderId === orderId);
+  if (!o) return;
+
+  document.getElementById('modal-title').textContent = `Order ${o.orderId}`;
+  document.getElementById('modal-sub').innerHTML = `<span class="platform-pill ${platformClass(o.platform)}">${platformLabel(o.platform)}</span>`;
+
+  const timeline = buildTimeline(o.status, o.date);
+
+  document.getElementById('modal-body').innerHTML = `
+    <div class="detail-grid">
+      <div class="detail-item"><label>Customer</label><span>${o.customer}</span></div>
+      <div class="detail-item"><label>Order Date</label><span>${fmtDate(o.date)}</span></div>
+      <div class="detail-item"><label>Status</label><span class="status-badge ${statusClass(o.status)}"><span class="status-dot"></span>${o.status}</span></div>
+      <div class="detail-item"><label>Total Amount</label><span>S$${o.total.toFixed(2)}</span></div>
+      <div class="detail-item"><label>Platform</label><span>${platformLabel(o.platform)}</span></div>
+      <div class="detail-item"><label>Order ID</label><span style="font-family:monospace;font-size:13px">${o.orderId}</span></div>
+    </div>
+
+    <div class="detail-products">
+      <h4>ITEMS ORDERED</h4>
+      <div class="detail-product-row">
+        <div class="product-thumb" style="font-size:22px">${o.product.emoji}</div>
+        <div style="flex:1">
+          <div class="product-name">${o.product.name}</div>
+          <div class="product-sku">${o.product.sku}</div>
+        </div>
+        <div style="text-align:right">
+          <div class="amount">S$${o.total.toFixed(2)}</div>
+          <div class="product-sku">Qty: ${o.qty} × S$${o.price.toFixed(2)}</div>
+        </div>
+      </div>
+      <div class="detail-product-row" style="justify-content:flex-end">
+        <div style="text-align:right">
+          <div style="font-size:12px;color:var(--muted)">Subtotal</div>
+          <div class="amount" style="font-size:18px">S$${o.total.toFixed(2)}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="timeline">
+      <h4>ORDER TIMELINE</h4>
+      ${timeline}
+    </div>
+  `;
+
+  document.getElementById('modal-backdrop').classList.add('open');
+}
+
+function buildTimeline(status, date) {
+  const steps = [
+    { key:'Pending',    label:'Order Placed',     icon:'📋' },
+    { key:'Processing', label:'Payment Confirmed', icon:'💳' },
+    { key:'Shipped',    label:'Shipped Out',       icon:'📦' },
+    { key:'Delivered',  label:'Delivered',         icon:'✅' },
+  ];
+
+  const order = ['Pending','Processing','Shipped','Delivered','Cancelled','Returned'];
+  const idx   = order.indexOf(status);
+
+  if (status === 'Cancelled') {
+    return `
+      <div class="timeline-item">
+        <div class="tl-dot done">✓</div>
+        <div class="tl-content"><div class="tl-title">Order Placed</div><div class="tl-time">${fmtDate(date)}</div></div>
+      </div>
+      <div class="timeline-item">
+        <div class="tl-dot" style="background:var(--red);border-color:var(--red);color:#fff">✕</div>
+        <div class="tl-content"><div class="tl-title">Order Cancelled</div><div class="tl-time">${fmtDate(date)}</div></div>
+      </div>`;
+  }
+
+  return steps.map((s, i) => {
+    const done   = i < idx;
+    const active = i === idx - 1 || (status === 'Delivered' && i === 3);
+    const d = new Date(date); d.setDate(d.getDate() + i);
+    return `
+      <div class="timeline-item">
+        <div class="tl-dot ${done || active ? 'done' : ''}">${done || active ? '✓' : i+1}</div>
+        <div class="tl-content">
+          <div class="tl-title">${s.icon} ${s.label}</div>
+          <div class="tl-time">${done || active ? fmtDate(d) : 'Pending'}</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function closeModal(e) { if (e.target === document.getElementById('modal-backdrop')) closeModalDirect(); }
+function closeModalDirect() { document.getElementById('modal-backdrop').classList.remove('open'); }
+
+// ── Toast ──────────────────────────────────────────────────────────
+function showToast(title, body, platform) {
+  const icons = { shopee:'🛒', lazada:'🏪', tiktok:'🎵', system:'🔔' };
+  const colors = { shopee:'var(--shopee)', lazada:'var(--lazada-l)', tiktok:'var(--tiktok-b)', system:'var(--blue)' };
+  const tc = document.getElementById('toast-container');
+  const t  = document.createElement('div');
+  t.className = 'toast';
+  t.style.borderLeftColor = colors[platform] || colors.system;
+  t.innerHTML = `
+    <div class="toast-icon">${icons[platform] || icons.system}</div>
+    <div class="toast-content">
+      <div class="toast-title">${title}</div>
+      <div class="toast-body">${body}</div>
+    </div>
+    <button style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;align-self:flex-start" onclick="this.parentElement.remove()">✕</button>
+  `;
+  tc.appendChild(t);
+  setTimeout(() => t.remove(), 5000);
+}
+
+// ── Sync / Export ─────────────────────────────────────────────────
+function syncNow() {
+  const btn = document.querySelector('.btn-primary');
+  btn.textContent = '↻ Syncing…';
+  btn.disabled = true;
+  setTimeout(() => {
+    btn.textContent = '↻ Sync Now';
+    btn.disabled = false;
+    document.getElementById('last-updated').textContent = 'just now';
+    showToast('Sync Complete', 'All platforms updated successfully.', 'system');
+  }, 1800);
+}
+
+function exportCSV() {
+  const orders = getFiltered();
+  const rows = [['Order ID','Platform','Product','Customer','Date','Qty','Unit Price','Total','Status']];
+  orders.forEach(o => rows.push([
+    o.orderId, platformLabel(o.platform), o.product.name, o.customer,
+    fmtDate(o.date), o.qty, o.price.toFixed(2), o.total.toFixed(2), o.status
+  ]));
+  const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'ecoharvest_orders.csv';
+  a.click();
+  showToast('Export Ready', `${orders.length} orders exported as CSV.`, 'system');
+}
+
+// ── Sidebar ────────────────────────────────────────────────────────
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+function setPage(p) {
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+}
+
+// ── Main Update ───────────────────────────────────────────────────
+function updateAll() {
+  updateStats();
+  updateBreakdown();
+  renderTable();
+  updateTopProducts();
+  updateFunnel();
+}
+
+// ── Simulate live orders ──────────────────────────────────────────
+const toastMessages = [
+  { platform:'shopee', title:'New Shopee Order',  body: () => `${rndEl(CUSTOMERS)} ordered ${rndEl(PRODUCTS).name}` },
+  { platform:'lazada', title:'New Lazada Order',  body: () => `${rndEl(CUSTOMERS)} ordered ${rndEl(PRODUCTS).name}` },
+  { platform:'tiktok', title:'New TikTok Order',  body: () => `${rndEl(CUSTOMERS)} ordered ${rndEl(PRODUCTS).name}` },
+  { platform:'system', title:'Order Delivered',   body: () => `Order SPE-10${rndInt(10,99)} was delivered` },
+];
+
+function randomToast() {
+  const m = rndEl(toastMessages);
+  showToast(m.title, m.body(), m.platform);
+}
+
+// ── Init ───────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  buildCharts();
+  updateAll();
+
+  // Show a welcome toast after 1.5s
+  setTimeout(() => showToast('Dashboard Ready', 'Showing live data from 3 platforms.', 'system'), 1500);
+
+  // Simulate incoming orders every 18-30 seconds
+  const scheduleToast = () => {
+    const delay = 18000 + Math.random() * 12000;
+    setTimeout(() => { randomToast(); scheduleToast(); }, delay);
+  };
+  scheduleToast();
+
+  // Update "last updated" clock
+  setInterval(() => {
+    const now2 = new Date();
+    document.getElementById('last-updated').textContent =
+      now2.toLocaleTimeString('en-SG', { hour:'2-digit', minute:'2-digit' });
+  }, 60000);
+});
+</script>
+</body>
+</html>
