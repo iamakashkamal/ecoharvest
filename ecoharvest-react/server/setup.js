@@ -93,9 +93,10 @@ router.get('/lazada/connect', (req, res) => {
   if (!APP_KEY) return res.status(400).send('LAZADA_APP_KEY not set in .env');
 
   const tunnelUrl   = (env.TUNNEL_URL || process.env.TUNNEL_URL || '').trim();
+  const sslPort     = process.env.SSL_PORT || 3443;
   const callbackUrl = tunnelUrl
     ? `${tunnelUrl}/setup/lazada/callback`
-    : `http://localhost:${process.env.PORT || 3001}/setup/lazada/callback`;
+    : `https://localhost:${sslPort}/setup/lazada/callback`;
   const authUrl = `https://auth.lazada.com/oauth/authorize?response_type=code&force_auth=true&redirect_uri=${encodeURIComponent(callbackUrl)}&client_id=${APP_KEY}&country=sg`;
   res.redirect(authUrl);
 });
