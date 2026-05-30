@@ -1,18 +1,18 @@
 import React from 'react';
 
 const NAV = [
-  { icon: '📊', label: 'Dashboard',   key: 'dashboard',  section: 'Overview' },
-  { icon: '📈', label: 'Analytics',   key: 'analytics',  section: null },
-  { icon: '🛒', label: 'Shopee SG',   key: 'shopee',     section: 'Platforms', dot: '#f05629' },
-  { icon: '🏪', label: 'Lazada SG',   key: 'lazada',     section: null,        dot: '#5a67f2' },
-  { icon: '🎵', label: 'TikTok Shop', key: 'tiktok',     section: null,        dot: '#69c9d0' },
-  { icon: '📦', label: 'Inventory',   key: 'inventory',  section: 'Management' },
-  { icon: '🚚', label: 'Fulfilment',  key: 'fulfilment', section: null },
-  { icon: '💬', label: 'Customer Chat', key: 'chat',     section: null },
-  { icon: '⚙️', label: 'Settings',   key: 'settings',   section: null },
+  { icon: '📊', label: 'Dashboard',    key: 'dashboard',  section: 'Overview' },
+  { icon: '📈', label: 'Analytics',    key: 'analytics',  section: null },
+  { icon: '🛒', label: 'Shopee SG',    key: 'shopee',     section: 'Platforms', platform: 'shopee', dot: '#f05629' },
+  { icon: '🏪', label: 'Lazada SG',    key: 'lazada',     section: null,        platform: 'lazada', dot: '#5a67f2' },
+  { icon: '🎵', label: 'TikTok Shop',  key: 'tiktok',     section: null,        platform: 'tiktok', dot: '#69c9d0' },
+  { icon: '📦', label: 'Inventory',    key: 'inventory',  section: 'Management' },
+  { icon: '🚚', label: 'Fulfilment',   key: 'fulfilment', section: null },
+  { icon: '💬', label: 'Customer Chat',key: 'chat',       section: null },
+  { icon: '⚙️', label: 'Settings',    key: 'settings',   section: null },
 ];
 
-export default function Sidebar({ activePage, onNav, open }) {
+export default function Sidebar({ activePage, onNav, open, platformStatus = {} }) {
   return (
     <aside className={`sidebar ${open ? 'open' : ''}`}>
       <div className="logo">
@@ -24,11 +24,9 @@ export default function Sidebar({ activePage, onNav, open }) {
       </div>
 
       <nav className="sidebar-nav">
-        {NAV.map((item, i) => (
+        {NAV.map((item) => (
           <React.Fragment key={item.key}>
-            {item.section && (
-              <div className="nav-section">{item.section}</div>
-            )}
+            {item.section && <div className="nav-section">{item.section}</div>}
             <button
               className={`nav-item ${activePage === item.key ? 'active' : ''}`}
               onClick={() => onNav(item.key)}
@@ -36,7 +34,16 @@ export default function Sidebar({ activePage, onNav, open }) {
               <span className="icon">{item.icon}</span>
               {item.label}
               {item.dot && (
-                <span className="platform-badge" style={{ background: item.dot }} />
+                <span
+                  className="platform-badge"
+                  style={{
+                    background: item.dot,
+                    boxShadow: platformStatus[item.platform]
+                      ? `0 0 6px ${item.dot}`
+                      : 'none',
+                    opacity: platformStatus[item.platform] ? 1 : 0.35,
+                  }}
+                />
               )}
             </button>
           </React.Fragment>

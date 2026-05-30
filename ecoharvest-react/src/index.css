@@ -614,6 +614,125 @@ td { padding: 13px 14px; vertical-align: middle; }
 }
 .toast-close:hover { color: var(--text); }
 
+/* ── Empty / Loading States ───────────────────────────────────── */
+.empty-chart {
+  height: 120px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--muted); font-size: 13px;
+}
+.empty-state {
+  padding: 32px 0;
+  text-align: center;
+  color: var(--muted); font-size: 13px;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--surface2) 25%, var(--border) 50%, var(--surface2) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+  display: block;
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.pulse-loading {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--yellow);
+  animation: pulse 0.8s infinite;
+}
+
+/* ── Product image variants ───────────────────────────────────── */
+.product-thumb-img {
+  width: 36px; height: 36px;
+  border-radius: 6px;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.tp-img {
+  width: 32px; height: 32px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+/* ── Connect Banner ───────────────────────────────────────────── */
+.connect-banner {
+  margin-bottom: 24px;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.connect-section { padding: 20px 24px; }
+
+.connect-heading {
+  display: flex; align-items: flex-start; gap: 14px;
+  margin-bottom: 18px;
+}
+.connect-icon  { font-size: 24px; }
+.connect-title { font-size: 15px; font-weight: 700; }
+.connect-sub   { font-size: 13px; color: var(--muted); margin-top: 3px; }
+.connect-sub code {
+  background: var(--surface2);
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--blue);
+}
+
+.connect-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.connect-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--platform-color, var(--border));
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+}
+
+.connect-card-header {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 12px;
+}
+.connect-card-name   { font-size: 13px; font-weight: 700; }
+.connect-card-status { font-size: 11px; color: var(--red); }
+.connect-docs-link {
+  margin-left: auto;
+  font-size: 12px; color: var(--blue);
+  text-decoration: none;
+}
+.connect-docs-link:hover { text-decoration: underline; }
+
+.connect-vars { display: flex; flex-wrap: wrap; gap: 6px; }
+.connect-var {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--muted);
+  font-family: monospace;
+}
+
+/* ── API Errors ───────────────────────────────────────────────── */
+.api-errors {
+  padding: 14px 24px;
+  border-top: 1px solid var(--border);
+  background: rgba(248,81,73,.05);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.api-error-row { display: flex; align-items: center; gap: 10px; font-size: 12px; }
+.api-error-platform { font-weight: 700; color: var(--red); min-width: 90px; }
+.api-error-msg      { color: var(--muted); }
+
 /* ── Scrollbar ────────────────────────────────────────────────── */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }

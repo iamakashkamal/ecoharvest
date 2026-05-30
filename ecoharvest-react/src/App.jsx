@@ -1,24 +1,27 @@
 import { useState, useCallback } from 'react';
-import Sidebar          from './components/Sidebar';
-import Topbar           from './components/Topbar';
-import FilterBar        from './components/FilterBar';
-import StatCards        from './components/StatCards';
-import RevenueChart     from './components/RevenueChart';
+import Sidebar           from './components/Sidebar';
+import Topbar            from './components/Topbar';
+import FilterBar         from './components/FilterBar';
+import StatCards         from './components/StatCards';
+import RevenueChart      from './components/RevenueChart';
 import PlatformBreakdown from './components/PlatformBreakdown';
-import OrdersTable      from './components/OrdersTable';
-import OrderModal       from './components/OrderModal';
-import TopProducts      from './components/TopProducts';
-import FulfilmentFunnel from './components/FulfilmentFunnel';
-import ToastContainer   from './components/ToastContainer';
-import { useFilters }   from './hooks/useFilters';
-import { useToasts }    from './hooks/useToasts';
+import OrdersTable       from './components/OrdersTable';
+import OrderModal        from './components/OrderModal';
+import TopProducts       from './components/TopProducts';
+import FulfilmentFunnel  from './components/FulfilmentFunnel';
+import ToastContainer    from './components/ToastContainer';
+import ConnectBanner     from './components/ConnectBanner';
+import { useOrders }     from './hooks/useOrders';
+import { useFilters }    from './hooks/useFilters';
+import { useToasts }     from './hooks/useToasts';
 import { PLATFORM_META } from './data/orders';
 
 function exportCSV(orders) {
-  const rows = [['Order ID','Platform','Product','Customer','Date','Qty','Unit Price','Total','Status']];
+  const rows = [['Order ID','Platform','Customer','Date','Items','Total','Status']];
   orders.forEach(o => {
-    const d = o.date.toLocaleDateString('en-SG', { day:'2-digit', month:'short', year:'numeric' });
-    rows.push([o.orderId, PLATFORM_META[o.platform].label, o.product.name, o.customer, d, o.qty, o.price.toFixed(2), o.total.toFixed(2), o.status]);
+    const d     = new Date(o.date).toLocaleDateString('en-SG', { day:'2-digit', month:'short', year:'numeric' });
+    const items = (o.items || []).map(i => `${i.name} x${i.qty}`).join('; ');
+    rows.push([o.orderId, PLATFORM_META[o.platform]?.label || o.platform, o.customer, d, items, o.total.toFixed(2), o.status]);
   });
   const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
   const a   = document.createElement('a');
@@ -31,8 +34,10 @@ export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [activePage,  setActivePage]  = useState('dashboard');
   const [selected,    setSelected]    = useState(null);
+  const [days,        setDays]        = useState(30);
 
-  const { platform, setPlatform, status, setStatus, search, setSearch, days, setDays, filtered } = useFilters();
+  const { orders, status: platformStatus, loading, errors, lastSync, reload } = useOrders(days);
+  const { platform, setPlatform, status, setStatus, search, setSearch, filtered } = useFilters(orders);
   const { toasts, push, dismiss } = useToasts();
 
   const handleNav = useCallback((key) => {
@@ -45,9 +50,10 @@ export default function App() {
     setSidebarOpen(false);
   }, [setPlatform]);
 
-  const handleSync = useCallback(() => {
+  const handleSync = useCallback(async () => {
+    await reload();
     push('Sync Complete', 'All platforms updated successfully.', 'system');
-  }, [push]);
+  }, [reload, push]);
 
   const handleExport = useCallback(() => {
     exportCSV(filtered);
@@ -56,29 +62,30 @@ export default function App() {
 
   return (
     <>
-      <Sidebar activePage={activePage} onNav={handleNav} open={sidebarOpen} />
-
-      {sidebarOpen && (
-        <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
-      )}
+      <Sidebar activePage={activePage} onNav={handleNav} open={sidebarOpen} platformStatus={platformStatus} />
+      {sidebarOpen && <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
 
       <div className="main">
         <Topbar
           onToggleSidebar={() => setSidebarOpen(o => !o)}
           onSync={handleSync}
           onExport={handleExport}
+          lastSync={lastSync}
+          loading={loading}
         />
 
         <div className="content">
+          <ConnectBanner platformStatus={platformStatus} apiErrors={errors} />
+
           <FilterBar
-            platform={platform} setPlatform={p => { setPlatform(p); }}
-            days={days} setDays={setDays}
+            platform={platform} setPlatform={setPlatform}
+            days={days}         setDays={setDays}
           />
 
-          <StatCards orders={filtered} />
+          <StatCards orders={filtered} loading={loading} />
 
           <div className="charts-row">
-            <RevenueChart />
+            <RevenueChart orders={filtered} days={days} />
             <PlatformBreakdown orders={filtered} />
           </div>
 
@@ -87,6 +94,7 @@ export default function App() {
             status={status}   setStatus={setStatus}
             search={search}   setSearch={setSearch}
             onSelectOrder={setSelected}
+            loading={loading}
           />
 
           <div className="bottom-row">

@@ -2,27 +2,29 @@ import { useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS, CategoryScale, LinearScale,
-  PointElement, LineElement, Filler, Tooltip, Legend,
+  PointElement, LineElement, Filler, Tooltip,
 } from 'chart.js';
-import { ALL_ORDERS, BASE_NOW } from '../data/orders';
 
-ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Filler, Tooltip);
 
-export default function RevenueChart() {
+export default function RevenueChart({ orders, days }) {
   const { labels, shopeeData, lazadaData, tiktokData } = useMemo(() => {
-    const labels = [], shopeeData = [], lazadaData = [], tiktokData = [];
-    for (let i = 29; i >= 0; i--) {
-      const d = new Date(BASE_NOW);
+    const span    = Math.min(days, 30);
+    const labels  = [], shopeeData = [], lazadaData = [], tiktokData = [];
+    const now     = new Date();
+
+    for (let i = span - 1; i >= 0; i--) {
+      const d = new Date(now);
       d.setDate(d.getDate() - i);
       const ds = d.toDateString();
       labels.push(d.toLocaleDateString('en-SG', { day: '2-digit', month: 'short' }));
-      const day = ALL_ORDERS.filter(o => o.date.toDateString() === ds);
+      const day = orders.filter(o => new Date(o.date).toDateString() === ds);
       shopeeData.push(+day.filter(o => o.platform === 'shopee').reduce((s, o) => s + o.total, 0).toFixed(2));
       lazadaData.push(+day.filter(o => o.platform === 'lazada').reduce((s, o) => s + o.total, 0).toFixed(2));
       tiktokData.push(+day.filter(o => o.platform === 'tiktok').reduce((s, o) => s + o.total, 0).toFixed(2));
     }
     return { labels, shopeeData, lazadaData, tiktokData };
-  }, []);
+  }, [orders, days]);
 
   const data = {
     labels,
@@ -66,7 +68,10 @@ export default function RevenueChart() {
           ))}
         </div>
       </div>
-      <Line data={data} options={options} />
+      {orders.length === 0
+        ? <div className="empty-chart">No data for this period</div>
+        : <Line data={data} options={options} />
+      }
     </div>
   );
 }

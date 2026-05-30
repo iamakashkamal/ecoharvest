@@ -4,21 +4,16 @@ import { PLATFORM_META, STATUS_META } from '../data/orders';
 const PAGE_SIZE = 15;
 
 function fmtDate(d) {
-  return d.toLocaleDateString('en-SG', { day: '2-digit', month: 'short', year: 'numeric' });
+  return new Date(d).toLocaleDateString('en-SG', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-export default function OrdersTable({ orders, status, setStatus, search, setSearch, onSelectOrder }) {
+export default function OrdersTable({ orders, status, setStatus, search, setSearch, onSelectOrder, loading }) {
   const [page, setPage] = useState(1);
-  const pages = Math.max(1, Math.ceil(orders.length / PAGE_SIZE));
+  const pages    = Math.max(1, Math.ceil(orders.length / PAGE_SIZE));
   const safePage = Math.min(page, pages);
-  const start = (safePage - 1) * PAGE_SIZE;
-  const slice = orders.slice(start, start + PAGE_SIZE);
+  const start    = (safePage - 1) * PAGE_SIZE;
+  const slice    = orders.slice(start, start + PAGE_SIZE);
 
-  function goPage(p) {
-    if (p >= 1 && p <= pages) setPage(p);
-  }
-
-  // Reset to page 1 when filters change
   if (page > pages && pages > 0) setPage(1);
 
   const pageNums = [...new Set([1, safePage - 1, safePage, safePage + 1, pages])]
@@ -31,7 +26,7 @@ export default function OrdersTable({ orders, status, setStatus, search, setSear
         <div>
           <div className="card-title">Recent Orders</div>
           <div className="card-sub">
-            Showing {Math.min(start + 1, orders.length)}–{Math.min(start + PAGE_SIZE, orders.length)} of {orders.length} orders
+            {loading ? 'Loading…' : `Showing ${Math.min(start + 1, orders.length)}–${Math.min(start + PAGE_SIZE, orders.length)} of ${orders.length} orders`}
           </div>
         </div>
         <select
@@ -64,7 +59,7 @@ export default function OrdersTable({ orders, status, setStatus, search, setSear
             <tr>
               <th>Order ID</th>
               <th>Platform</th>
-              <th>Product</th>
+              <th>Items</th>
               <th>Customer</th>
               <th>Date</th>
               <th>Amount</th>
@@ -73,69 +68,91 @@ export default function OrdersTable({ orders, status, setStatus, search, setSear
             </tr>
           </thead>
           <tbody>
-            {slice.map(o => {
-              const pm = PLATFORM_META[o.platform];
-              const sm = STATUS_META[o.status] || {};
-              return (
-                <tr key={o.orderId} onClick={() => onSelectOrder(o)}>
-                  <td><span className="order-id">{o.orderId}</span></td>
-                  <td><span className={`platform-pill ${pm.pillClass}`}>{pm.label}</span></td>
-                  <td>
-                    <div className="product-cell">
-                      <div className="product-thumb">{o.product.emoji}</div>
-                      <div>
-                        <div className="product-name">{o.product.name}</div>
-                        <div className="product-sku">{o.product.sku} · Qty {o.qty}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td>{o.customer}</td>
-                  <td>{fmtDate(o.date)}</td>
-                  <td><span className="amount">S${o.total.toFixed(2)}</span></td>
-                  <td>
-                    <span className={`status-badge ${sm.cls}`}>
-                      <span className="status-dot" />
-                      {o.status}
-                    </span>
-                  </td>
-                  <td>
-                    <button
-                      className="btn btn-ghost btn-sm"
-                      onClick={e => { e.stopPropagation(); onSelectOrder(o); }}
-                    >
-                      View
-                    </button>
-                  </td>
-                </tr>
-              );
-            })}
+            {loading
+              ? Array.from({ length: 6 }).map((_, i) => (
+                  <tr key={i}>
+                    {Array.from({ length: 8 }).map((_, j) => (
+                      <td key={j}><div className="skeleton" style={{ height: 14, width: '80%', borderRadius: 4 }} /></td>
+                    ))}
+                  </tr>
+                ))
+              : slice.map(o => {
+                  const pm   = PLATFORM_META[o.platform] || {};
+                  const sm   = STATUS_META[o.status]     || {};
+                  const item = o.items?.[0];
+                  return (
+                    <tr key={o.orderId} onClick={() => onSelectOrder(o)}>
+                      <td><span className="order-id">{o.orderId}</span></td>
+                      <td><span className={`platform-pill ${pm.pillClass}`}>{pm.label}</span></td>
+                      <td>
+                        <div className="product-cell">
+                          {item?.image
+                            ? <img src={item.image} alt={item.name} className="product-thumb-img" />
+                            : <div className="product-thumb">📦</div>
+                          }
+                          <div>
+                            <div className="product-name">{item?.name || '—'}</div>
+                            <div className="product-sku">
+                              {item?.sku}{o.items?.length > 1 ? ` +${o.items.length - 1} more` : ''}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+                      <td>{o.customer}</td>
+                      <td>{fmtDate(o.date)}</td>
+                      <td><span className="amount">S${o.total.toFixed(2)}</span></td>
+                      <td>
+                        <span className={`status-badge ${sm.cls}`}>
+                          <span className="status-dot" />{o.status}
+                        </span>
+                      </td>
+                      <td>
+                        <button
+                          className="btn btn-ghost btn-sm"
+                          onClick={e => { e.stopPropagation(); onSelectOrder(o); }}
+                        >
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+            }
+            {!loading && orders.length === 0 && (
+              <tr>
+                <td colSpan={8} style={{ textAlign: 'center', padding: '40px 0', color: 'var(--muted)' }}>
+                  No orders found
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
 
-      <div className="pagination">
-        <div className="page-info">
-          Showing {Math.min(start + 1, orders.length)}–{Math.min(start + PAGE_SIZE, orders.length)} of {orders.length} orders
+      {orders.length > 0 && (
+        <div className="pagination">
+          <div className="page-info">
+            Showing {Math.min(start + 1, orders.length)}–{Math.min(start + PAGE_SIZE, orders.length)} of {orders.length} orders
+          </div>
+          <div className="page-btns">
+            <button className="page-btn" onClick={() => setPage(p => p - 1)} disabled={safePage === 1}>‹</button>
+            {pageNums.map((p, i) => (
+              <span key={p}>
+                {i > 0 && pageNums[i] - pageNums[i - 1] > 1 && (
+                  <button className="page-btn" disabled>…</button>
+                )}
+                <button
+                  className={`page-btn ${p === safePage ? 'active' : ''}`}
+                  onClick={() => setPage(p)}
+                >
+                  {p}
+                </button>
+              </span>
+            ))}
+            <button className="page-btn" onClick={() => setPage(p => p + 1)} disabled={safePage === pages}>›</button>
+          </div>
         </div>
-        <div className="page-btns">
-          <button className="page-btn" onClick={() => goPage(safePage - 1)} disabled={safePage === 1}>‹</button>
-          {pageNums.map((p, i) => (
-            <>
-              {i > 0 && pageNums[i] - pageNums[i - 1] > 1 && (
-                <button key={`dot-${p}`} className="page-btn" disabled>…</button>
-              )}
-              <button
-                key={p}
-                className={`page-btn ${p === safePage ? 'active' : ''}`}
-                onClick={() => goPage(p)}
-              >
-                {p}
-              </button>
-            </>
-          ))}
-          <button className="page-btn" onClick={() => goPage(safePage + 1)} disabled={safePage === pages}>›</button>
-        </div>
-      </div>
+      )}
     </div>
   );
 }
